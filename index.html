@@ -376,10 +376,11 @@
         const savedTheme = localStorage.getItem('asciiCameraTheme');
         if (savedTheme && themes.includes(savedTheme)) {
             currentThemeIndex = themes.indexOf(savedTheme);
-            document.body.classList.add(`theme-${savedTheme}`);
         } else {
-            document.body.classList.add('theme-pink');
+            currentThemeIndex = 0; // Default to pink
         }
+        // Always apply the initial theme
+        document.body.classList.add(`theme-${themes[currentThemeIndex]}`);
 
         // Auto-start on mobile
         if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
