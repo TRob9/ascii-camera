@@ -101,14 +101,22 @@
 
         #ascii-output {
             font-family: 'Courier New', monospace;
-            font-size: 6px;
-            line-height: 6px;
+            font-size: clamp(4px, 1.5vw, 10px);
+            line-height: clamp(4px, 1.5vw, 10px);
             white-space: pre;
             color: inherit;
             text-align: center;
             overflow: hidden;
             padding: 0.5rem;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Larger font on desktop */
+        @media (min-width: 768px) {
+            #ascii-output {
+                font-size: 8px;
+                line-height: 8px;
+            }
         }
 
         .error {
@@ -180,8 +188,6 @@
         <button id="start-btn">Start Camera</button>
         <button id="flip-btn" disabled>Flip Camera</button>
         <button id="theme-btn">Change Color</button>
-        <button id="save-btn" disabled>Save Image</button>
-        <button id="copy-btn" disabled>Copy to Clipboard</button>
     </div>
 
     <div class="camera-container">
@@ -203,8 +209,6 @@
         const startBtn = document.getElementById('start-btn');
         const flipBtn = document.getElementById('flip-btn');
         const themeBtn = document.getElementById('theme-btn');
-        const saveBtn = document.getElementById('save-btn');
-        const copyBtn = document.getElementById('copy-btn');
         const loading = document.getElementById('loading');
         const errorDiv = document.getElementById('error');
         const fpsDisplay = document.getElementById('fps');
@@ -229,8 +233,9 @@
         let frameCount = 0;
         let fps = 0;
 
-        // ASCII conversion settings
-        const ASCII_WIDTH = 80;  // Characters wide
+        // ASCII conversion settings - responsive based on screen size
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const ASCII_WIDTH = isMobile ? 80 : 120;  // More characters on desktop
         let ASCII_HEIGHT = 40;   // Will be calculated based on aspect ratio
 
         async function startCamera() {
@@ -258,8 +263,6 @@
                     video.play();
                     loading.style.display = 'none';
                     flipBtn.disabled = false;
-                    saveBtn.disabled = false;
-                    copyBtn.disabled = false;
                     startBtn.textContent = 'Stop Camera';
                     startBtn.disabled = false;
 
@@ -296,71 +299,6 @@
             asciiOutput.textContent = '';
             startBtn.textContent = 'Start Camera';
             flipBtn.disabled = true;
-            saveBtn.disabled = true;
-            copyBtn.disabled = true;
-        }
-
-        function showToast(message) {
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2000);
-        }
-
-        function saveAsImage() {
-            const text = asciiOutput.textContent;
-            if (!text) return;
-
-            // Create a canvas with the ASCII art
-            const saveCanvas = document.createElement('canvas');
-            const saveCtx = saveCanvas.getContext('2d');
-
-            // Set canvas size (each character is roughly 6x6 pixels)
-            const lines = text.split('\n');
-            const width = ASCII_WIDTH * 6;
-            const height = lines.length * 6;
-            saveCanvas.width = width;
-            saveCanvas.height = height;
-
-            // Get current theme color
-            const color = getComputedStyle(document.body).color;
-
-            // Draw background
-            saveCtx.fillStyle = '#000000';
-            saveCtx.fillRect(0, 0, width, height);
-
-            // Draw text
-            saveCtx.fillStyle = color;
-            saveCtx.font = '6px Courier New';
-            saveCtx.textBaseline = 'top';
-
-            lines.forEach((line, i) => {
-                saveCtx.fillText(line, 0, i * 6);
-            });
-
-            // Download
-            saveCanvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `ascii-camera-${Date.now()}.png`;
-                a.click();
-                URL.revokeObjectURL(url);
-                showToast('Image saved!');
-            });
-        }
-
-        function copyToClipboard() {
-            const text = asciiOutput.textContent;
-            if (!text) return;
-
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('Copied to clipboard!');
-            }).catch(err => {
-                console.error('Copy failed:', err);
-                showToast('Copy failed');
-            });
         }
 
         function renderFrame() {
@@ -433,9 +371,6 @@
             // Save preference
             localStorage.setItem('asciiCameraTheme', themes[currentThemeIndex]);
         });
-
-        saveBtn.addEventListener('click', saveAsImage);
-        copyBtn.addEventListener('click', copyToClipboard);
 
         // Load saved theme
         const savedTheme = localStorage.getItem('asciiCameraTheme');
