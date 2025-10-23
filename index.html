@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>ASCII Camera</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            touch-action: manipulation;
+        }
+
+        .header {
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid #00ff00;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: #00aa00;
+            margin-top: 0.3rem;
+        }
+
+        .controls {
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+            border-bottom: 1px solid #00ff00;
+        }
+
+        button {
+            background: #00ff00;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.6rem 1rem;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        button:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .camera-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #video {
+            display: none;
+        }
+
+        #ascii-output {
+            font-family: 'Courier New', monospace;
+            font-size: 6px;
+            line-height: 6px;
+            white-space: pre;
+            color: #00ff00;
+            text-align: center;
+            overflow: hidden;
+            padding: 0.5rem;
+            background: #0a0a0a;
+            text-shadow: 0 0 2px #00ff00;
+        }
+
+        .error {
+            color: #ff0000;
+            text-align: center;
+            padding: 2rem;
+            font-size: 1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: #00ff00;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .info {
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.9);
+            text-align: center;
+            font-size: 0.7rem;
+            color: #00aa00;
+            flex-shrink: 0;
+        }
+
+        /* Color mode styles */
+        body.color-mode {
+            color: #ffffff;
+        }
+
+        body.color-mode #ascii-output {
+            color: #ffffff;
+            text-shadow: none;
+        }
+
+        body.color-mode h1 {
+            color: #ffffff;
+        }
+
+        body.invert-mode {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        body.invert-mode .header,
+        body.invert-mode .controls,
+        body.invert-mode .info {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: #000000;
+        }
+
+        body.invert-mode h1 {
+            color: #000000;
+            text-shadow: none;
+        }
+
+        body.invert-mode #ascii-output {
+            color: #000000;
+            background: #ffffff;
+            text-shadow: none;
+        }
+
+        body.invert-mode button {
+            background: #000000;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📷 ASCII Camera</h1>
+        <div class="subtitle">Live camera to ASCII art</div>
+    </div>
+
+    <div class="controls">
+        <button id="start-btn">Start Camera</button>
+        <button id="flip-btn" disabled>Flip Camera</button>
+        <button id="color-btn">Color Mode</button>
+        <button id="invert-btn">Invert</button>
+    </div>
+
+    <div class="camera-container">
+        <video id="video" playsinline autoplay></video>
+        <pre id="ascii-output"></pre>
+        <div id="loading" class="loading" style="display: none;">Initializing camera...</div>
+        <div id="error" class="error" style="display: none;"></div>
+    </div>
+
+    <div class="info">
+        <span id="fps">FPS: 0</span> | <span id="resolution">Resolution: 0x0</span>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const asciiOutput = document.getElementById('ascii-output');
+        const startBtn = document.getElementById('start-btn');
+        const flipBtn = document.getElementById('flip-btn');
+        const colorBtn = document.getElementById('color-btn');
+        const invertBtn = document.getElementById('invert-btn');
+        const loading = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const fpsDisplay = document.getElementById('fps');
+        const resolutionDisplay = document.getElementById('resolution');
+
+        // ASCII characters from darkest to lightest
+        const ASCII_CHARS = ' .:-=+*#%@';
+
+        let stream = null;
+        let animationId = null;
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d', { willReadFrequently: true });
+        let currentFacingMode = 'user'; // Start with front camera
+        let colorMode = false;
+        let invertMode = false;
+
+        // FPS tracking
+        let lastFrameTime = Date.now();
+        let frameCount = 0;
+        let fps = 0;
+
+        // ASCII conversion settings
+        const ASCII_WIDTH = 80;  // Characters wide
+        let ASCII_HEIGHT = 40;   // Will be calculated based on aspect ratio
+
+        async function startCamera() {
+            try {
+                loading.style.display = 'block';
+                errorDiv.style.display = 'none';
+                startBtn.disabled = true;
+
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                const constraints = {
+                    video: {
+                        facingMode: currentFacingMode,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+
+                video.onloadedmetadata = () => {
+                    video.play();
+                    loading.style.display = 'none';
+                    flipBtn.disabled = false;
+                    startBtn.textContent = 'Stop Camera';
+                    startBtn.disabled = false;
+
+                    // Set canvas size based on video
+                    canvas.width = ASCII_WIDTH;
+                    ASCII_HEIGHT = Math.floor((video.videoHeight / video.videoWidth) * ASCII_WIDTH * 0.5);
+                    canvas.height = ASCII_HEIGHT;
+
+                    resolutionDisplay.textContent = `Resolution: ${ASCII_WIDTH}x${ASCII_HEIGHT}`;
+
+                    // Start rendering
+                    renderFrame();
+                };
+
+            } catch (err) {
+                console.error('Camera error:', err);
+                loading.style.display = 'none';
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = `Camera access denied: ${err.message}`;
+                startBtn.disabled = false;
+                startBtn.textContent = 'Start Camera';
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            asciiOutput.textContent = '';
+            startBtn.textContent = 'Start Camera';
+            flipBtn.disabled = true;
+        }
+
+        function renderFrame() {
+            if (!stream) return;
+
+            // Draw video frame to canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+
+            let ascii = '';
+
+            if (colorMode) {
+                // Color mode - use ANSI color codes (limited support in pre tags)
+                for (let y = 0; y < canvas.height; y++) {
+                    for (let x = 0; x < canvas.width; x++) {
+                        const idx = (y * canvas.width + x) * 4;
+                        const r = pixels[idx];
+                        const g = pixels[idx + 1];
+                        const b = pixels[idx + 2];
+
+                        // Calculate brightness
+                        const brightness = (r + g + b) / 3;
+                        const charIndex = Math.floor((brightness / 255) * (ASCII_CHARS.length - 1));
+                        const char = invertMode ? ASCII_CHARS[ASCII_CHARS.length - 1 - charIndex] : ASCII_CHARS[charIndex];
+
+                        ascii += char;
+                    }
+                    ascii += '\n';
+                }
+            } else {
+                // Monochrome mode
+                for (let y = 0; y < canvas.height; y++) {
+                    for (let x = 0; x < canvas.width; x++) {
+                        const idx = (y * canvas.width + x) * 4;
+                        const r = pixels[idx];
+                        const g = pixels[idx + 1];
+                        const b = pixels[idx + 2];
+
+                        // Calculate brightness
+                        const brightness = (r + g + b) / 3;
+                        const charIndex = Math.floor((brightness / 255) * (ASCII_CHARS.length - 1));
+                        const char = invertMode ? ASCII_CHARS[ASCII_CHARS.length - 1 - charIndex] : ASCII_CHARS[charIndex];
+
+                        ascii += char;
+                    }
+                    ascii += '\n';
+                }
+            }
+
+            asciiOutput.textContent = ascii;
+
+            // Update FPS
+            frameCount++;
+            const now = Date.now();
+            if (now - lastFrameTime >= 1000) {
+                fps = frameCount;
+                fpsDisplay.textContent = `FPS: ${fps}`;
+                frameCount = 0;
+                lastFrameTime = now;
+            }
+
+            animationId = requestAnimationFrame(renderFrame);
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (stream) {
+                stopCamera();
+            } else {
+                startCamera();
+            }
+        });
+
+        flipBtn.addEventListener('click', async () => {
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            if (stream) {
+                await startCamera();
+            }
+        });
+
+        colorBtn.addEventListener('click', () => {
+            colorMode = !colorMode;
+            document.body.classList.toggle('color-mode', colorMode);
+            colorBtn.textContent = colorMode ? 'Mono Mode' : 'Color Mode';
+        });
+
+        invertBtn.addEventListener('click', () => {
+            invertMode = !invertMode;
+            document.body.classList.toggle('invert-mode', invertMode);
+            invertBtn.textContent = invertMode ? 'Normal' : 'Invert';
+        });
+
+        // Auto-start on mobile
+        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            window.addEventListener('load', () => {
+                // Wait for user interaction due to autoplay policies
+                document.body.addEventListener('click', () => {
+                    if (!stream) {
+                        startCamera();
+                    }
+                }, { once: true });
+            });
+        }
+    </script>
+</body>
+</html>
