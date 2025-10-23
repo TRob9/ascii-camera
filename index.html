@@ -17,64 +17,67 @@
 
         body {
             font-family: 'Courier New', monospace;
-            background: #0a0a0a;
-            color: #00ff00;
+            background: linear-gradient(135deg, #ffeef8 0%, #e8f4ff 100%);
+            color: #ff69b4;
             overflow: hidden;
             width: 100vw;
             height: 100vh;
             display: flex;
             flex-direction: column;
             touch-action: manipulation;
+            transition: all 0.3s ease;
         }
 
         .header {
             padding: 1rem;
-            background: rgba(0, 0, 0, 0.8);
-            border-bottom: 2px solid #00ff00;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid currentColor;
             text-align: center;
             flex-shrink: 0;
         }
 
         h1 {
             font-size: 1.5rem;
-            color: #00ff00;
-            text-shadow: 0 0 10px #00ff00;
+            color: inherit;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .subtitle {
             font-size: 0.8rem;
-            color: #00aa00;
+            opacity: 0.8;
             margin-top: 0.3rem;
         }
 
         .controls {
             padding: 0.8rem;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
             display: flex;
             gap: 0.5rem;
             justify-content: center;
             flex-wrap: wrap;
             flex-shrink: 0;
-            border-bottom: 1px solid #00ff00;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         button {
-            background: #00ff00;
-            color: #0a0a0a;
-            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: inherit;
+            border: 2px solid currentColor;
             padding: 0.6rem 1rem;
             font-family: 'Courier New', monospace;
             font-weight: bold;
             font-size: 0.9rem;
-            border-radius: 5px;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         button:active {
             transform: scale(0.95);
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         button:disabled {
@@ -100,12 +103,11 @@
             font-size: 6px;
             line-height: 6px;
             white-space: pre;
-            color: #00ff00;
+            color: inherit;
             text-align: center;
             overflow: hidden;
             padding: 0.5rem;
-            background: #0a0a0a;
-            text-shadow: 0 0 2px #00ff00;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         .error {
@@ -130,54 +132,68 @@
 
         .info {
             padding: 0.5rem;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
             text-align: center;
             font-size: 0.7rem;
-            color: #00aa00;
+            opacity: 0.8;
             flex-shrink: 0;
         }
 
-        /* Color mode styles */
-        body.color-mode {
-            color: #ffffff;
+        /* Color themes */
+        body.theme-pink {
+            background: linear-gradient(135deg, #ffeef8 0%, #e8f4ff 100%);
+            color: #ff69b4;
         }
 
-        body.color-mode #ascii-output {
-            color: #ffffff;
-            text-shadow: none;
+        body.theme-blue {
+            background: linear-gradient(135deg, #e0f7ff 0%, #f0e8ff 100%);
+            color: #6495ed;
         }
 
-        body.color-mode h1 {
-            color: #ffffff;
+        body.theme-purple {
+            background: linear-gradient(135deg, #f3e8ff 0%, #ffe8f7 100%);
+            color: #da70d6;
         }
 
-        body.invert-mode {
-            background: #ffffff;
-            color: #000000;
+        body.theme-mint {
+            background: linear-gradient(135deg, #e8fff8 0%, #fffef0 100%);
+            color: #3cb371;
         }
 
-        body.invert-mode .header,
-        body.invert-mode .controls,
-        body.invert-mode .info {
-            background: rgba(255, 255, 255, 0.9);
-            border-color: #000000;
+        body.theme-peach {
+            background: linear-gradient(135deg, #fff5e8 0%, #ffe8ef 100%);
+            color: #ff9966;
         }
 
-        body.invert-mode h1 {
-            color: #000000;
-            text-shadow: none;
+        body.theme-lavender {
+            background: linear-gradient(135deg, #f0e8ff 0%, #e8f8ff 100%);
+            color: #9370db;
         }
 
-        body.invert-mode #ascii-output {
-            color: #000000;
-            background: #ffffff;
-            text-shadow: none;
+        body.theme-matrix {
+            background: #0a0a0a;
+            color: #00ff00;
         }
 
-        body.invert-mode button {
-            background: #000000;
-            color: #ffffff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        body.theme-matrix .header,
+        body.theme-matrix .controls,
+        body.theme-matrix .info {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        body.theme-matrix h1 {
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        body.theme-matrix #ascii-output {
+            text-shadow: 0 0 2px #00ff00;
+        }
+
+        body.theme-matrix button {
+            background: #00ff00;
+            color: #0a0a0a;
+            border-color: #00ff00;
         }
     </style>
 </head>
@@ -190,8 +206,7 @@
     <div class="controls">
         <button id="start-btn">Start Camera</button>
         <button id="flip-btn" disabled>Flip Camera</button>
-        <button id="color-btn">Color Mode</button>
-        <button id="invert-btn">Invert</button>
+        <button id="theme-btn">🎨 Theme</button>
     </div>
 
     <div class="camera-container">
@@ -210,8 +225,7 @@
         const asciiOutput = document.getElementById('ascii-output');
         const startBtn = document.getElementById('start-btn');
         const flipBtn = document.getElementById('flip-btn');
-        const colorBtn = document.getElementById('color-btn');
-        const invertBtn = document.getElementById('invert-btn');
+        const themeBtn = document.getElementById('theme-btn');
         const loading = document.getElementById('loading');
         const errorDiv = document.getElementById('error');
         const fpsDisplay = document.getElementById('fps');
@@ -225,8 +239,10 @@
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d', { willReadFrequently: true });
         let currentFacingMode = 'user'; // Start with front camera
-        let colorMode = false;
-        let invertMode = false;
+
+        // Theme cycling
+        const themes = ['pink', 'blue', 'purple', 'mint', 'peach', 'lavender', 'matrix'];
+        let currentThemeIndex = 0;
 
         // FPS tracking
         let lastFrameTime = Date.now();
@@ -310,42 +326,21 @@
 
             let ascii = '';
 
-            if (colorMode) {
-                // Color mode - use ANSI color codes (limited support in pre tags)
-                for (let y = 0; y < canvas.height; y++) {
-                    for (let x = 0; x < canvas.width; x++) {
-                        const idx = (y * canvas.width + x) * 4;
-                        const r = pixels[idx];
-                        const g = pixels[idx + 1];
-                        const b = pixels[idx + 2];
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const idx = (y * canvas.width + x) * 4;
+                    const r = pixels[idx];
+                    const g = pixels[idx + 1];
+                    const b = pixels[idx + 2];
 
-                        // Calculate brightness
-                        const brightness = (r + g + b) / 3;
-                        const charIndex = Math.floor((brightness / 255) * (ASCII_CHARS.length - 1));
-                        const char = invertMode ? ASCII_CHARS[ASCII_CHARS.length - 1 - charIndex] : ASCII_CHARS[charIndex];
+                    // Calculate brightness
+                    const brightness = (r + g + b) / 3;
+                    const charIndex = Math.floor((brightness / 255) * (ASCII_CHARS.length - 1));
+                    const char = ASCII_CHARS[charIndex];
 
-                        ascii += char;
-                    }
-                    ascii += '\n';
+                    ascii += char;
                 }
-            } else {
-                // Monochrome mode
-                for (let y = 0; y < canvas.height; y++) {
-                    for (let x = 0; x < canvas.width; x++) {
-                        const idx = (y * canvas.width + x) * 4;
-                        const r = pixels[idx];
-                        const g = pixels[idx + 1];
-                        const b = pixels[idx + 2];
-
-                        // Calculate brightness
-                        const brightness = (r + g + b) / 3;
-                        const charIndex = Math.floor((brightness / 255) * (ASCII_CHARS.length - 1));
-                        const char = invertMode ? ASCII_CHARS[ASCII_CHARS.length - 1 - charIndex] : ASCII_CHARS[charIndex];
-
-                        ascii += char;
-                    }
-                    ascii += '\n';
-                }
+                ascii += '\n';
             }
 
             asciiOutput.textContent = ascii;
@@ -378,17 +373,28 @@
             }
         });
 
-        colorBtn.addEventListener('click', () => {
-            colorMode = !colorMode;
-            document.body.classList.toggle('color-mode', colorMode);
-            colorBtn.textContent = colorMode ? 'Mono Mode' : 'Color Mode';
+        themeBtn.addEventListener('click', () => {
+            // Remove current theme
+            document.body.classList.remove(`theme-${themes[currentThemeIndex]}`);
+
+            // Cycle to next theme
+            currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+
+            // Apply new theme
+            document.body.classList.add(`theme-${themes[currentThemeIndex]}`);
+
+            // Save preference
+            localStorage.setItem('asciiCameraTheme', themes[currentThemeIndex]);
         });
 
-        invertBtn.addEventListener('click', () => {
-            invertMode = !invertMode;
-            document.body.classList.toggle('invert-mode', invertMode);
-            invertBtn.textContent = invertMode ? 'Normal' : 'Invert';
-        });
+        // Load saved theme
+        const savedTheme = localStorage.getItem('asciiCameraTheme');
+        if (savedTheme && themes.includes(savedTheme)) {
+            currentThemeIndex = themes.indexOf(savedTheme);
+            document.body.classList.add(`theme-${savedTheme}`);
+        } else {
+            document.body.classList.add('theme-pink');
+        }
 
         // Auto-start on mobile
         if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
