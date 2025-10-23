@@ -17,7 +17,7 @@
 
         body {
             font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, #ffeef8 0%, #e8f4ff 100%);
+            background: #000000;
             color: #ff69b4;
             overflow: hidden;
             width: 100vw;
@@ -25,13 +25,12 @@
             display: flex;
             flex-direction: column;
             touch-action: manipulation;
-            transition: all 0.3s ease;
+            transition: color 0.3s ease;
         }
 
         .header {
             padding: 1rem;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.9);
             border-bottom: 2px solid currentColor;
             text-align: center;
             flex-shrink: 0;
@@ -51,33 +50,35 @@
 
         .controls {
             padding: 0.8rem;
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             gap: 0.5rem;
             justify-content: center;
             flex-wrap: wrap;
             flex-shrink: 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid currentColor;
         }
 
         button {
-            background: rgba(255, 255, 255, 0.9);
+            background: transparent;
             color: inherit;
             border: 2px solid currentColor;
             padding: 0.6rem 1rem;
             font-family: 'Courier New', monospace;
             font-weight: bold;
             font-size: 0.9rem;
-            border-radius: 10px;
+            border-radius: 5px;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: currentColor;
+            color: #000000;
         }
 
         button:active {
             transform: scale(0.95);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         button:disabled {
@@ -132,81 +133,55 @@
 
         .info {
             padding: 0.5rem;
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.9);
             text-align: center;
             font-size: 0.7rem;
             opacity: 0.8;
             flex-shrink: 0;
         }
 
-        /* Color themes */
-        body.theme-pink {
-            background: linear-gradient(135deg, #ffeef8 0%, #e8f4ff 100%);
-            color: #ff69b4;
+        .toast {
+            position: fixed;
+            bottom: 5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: currentColor;
+            color: #000000;
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1000;
         }
 
-        body.theme-blue {
-            background: linear-gradient(135deg, #e0f7ff 0%, #f0e8ff 100%);
-            color: #6495ed;
+        .toast.show {
+            opacity: 1;
         }
 
-        body.theme-purple {
-            background: linear-gradient(135deg, #f3e8ff 0%, #ffe8f7 100%);
-            color: #da70d6;
-        }
-
-        body.theme-mint {
-            background: linear-gradient(135deg, #e8fff8 0%, #fffef0 100%);
-            color: #3cb371;
-        }
-
-        body.theme-peach {
-            background: linear-gradient(135deg, #fff5e8 0%, #ffe8ef 100%);
-            color: #ff9966;
-        }
-
-        body.theme-lavender {
-            background: linear-gradient(135deg, #f0e8ff 0%, #e8f8ff 100%);
-            color: #9370db;
-        }
-
-        body.theme-matrix {
-            background: #0a0a0a;
-            color: #00ff00;
-        }
-
-        body.theme-matrix .header,
-        body.theme-matrix .controls,
-        body.theme-matrix .info {
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        body.theme-matrix h1 {
-            text-shadow: 0 0 10px #00ff00;
-        }
-
-        body.theme-matrix #ascii-output {
-            text-shadow: 0 0 2px #00ff00;
-        }
-
-        body.theme-matrix button {
-            background: #00ff00;
-            color: #0a0a0a;
-            border-color: #00ff00;
-        }
+        /* Color themes - text color only */
+        body.theme-pink { color: #ff69b4; }
+        body.theme-blue { color: #6495ed; }
+        body.theme-purple { color: #da70d6; }
+        body.theme-mint { color: #3cb371; }
+        body.theme-peach { color: #ff9966; }
+        body.theme-lavender { color: #9370db; }
+        body.theme-matrix { color: #00ff00; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>📷 ASCII Camera</h1>
+        <h1>ASCII Camera</h1>
         <div class="subtitle">Live camera to ASCII art</div>
     </div>
 
     <div class="controls">
         <button id="start-btn">Start Camera</button>
         <button id="flip-btn" disabled>Flip Camera</button>
-        <button id="theme-btn">🎨 Theme</button>
+        <button id="theme-btn">Change Color</button>
+        <button id="save-btn" disabled>Save Image</button>
+        <button id="copy-btn" disabled>Copy to Clipboard</button>
     </div>
 
     <div class="camera-container">
@@ -220,16 +195,21 @@
         <span id="fps">FPS: 0</span> | <span id="resolution">Resolution: 0x0</span>
     </div>
 
+    <div id="toast" class="toast"></div>
+
     <script>
         const video = document.getElementById('video');
         const asciiOutput = document.getElementById('ascii-output');
         const startBtn = document.getElementById('start-btn');
         const flipBtn = document.getElementById('flip-btn');
         const themeBtn = document.getElementById('theme-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const copyBtn = document.getElementById('copy-btn');
         const loading = document.getElementById('loading');
         const errorDiv = document.getElementById('error');
         const fpsDisplay = document.getElementById('fps');
         const resolutionDisplay = document.getElementById('resolution');
+        const toast = document.getElementById('toast');
 
         // ASCII characters from darkest to lightest - expanded set
         const ASCII_CHARS = ' .`\'^",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$';
@@ -278,6 +258,8 @@
                     video.play();
                     loading.style.display = 'none';
                     flipBtn.disabled = false;
+                    saveBtn.disabled = false;
+                    copyBtn.disabled = false;
                     startBtn.textContent = 'Stop Camera';
                     startBtn.disabled = false;
 
@@ -314,6 +296,71 @@
             asciiOutput.textContent = '';
             startBtn.textContent = 'Start Camera';
             flipBtn.disabled = true;
+            saveBtn.disabled = true;
+            copyBtn.disabled = true;
+        }
+
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        function saveAsImage() {
+            const text = asciiOutput.textContent;
+            if (!text) return;
+
+            // Create a canvas with the ASCII art
+            const saveCanvas = document.createElement('canvas');
+            const saveCtx = saveCanvas.getContext('2d');
+
+            // Set canvas size (each character is roughly 6x6 pixels)
+            const lines = text.split('\n');
+            const width = ASCII_WIDTH * 6;
+            const height = lines.length * 6;
+            saveCanvas.width = width;
+            saveCanvas.height = height;
+
+            // Get current theme color
+            const color = getComputedStyle(document.body).color;
+
+            // Draw background
+            saveCtx.fillStyle = '#000000';
+            saveCtx.fillRect(0, 0, width, height);
+
+            // Draw text
+            saveCtx.fillStyle = color;
+            saveCtx.font = '6px Courier New';
+            saveCtx.textBaseline = 'top';
+
+            lines.forEach((line, i) => {
+                saveCtx.fillText(line, 0, i * 6);
+            });
+
+            // Download
+            saveCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ascii-camera-${Date.now()}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('Image saved!');
+            });
+        }
+
+        function copyToClipboard() {
+            const text = asciiOutput.textContent;
+            if (!text) return;
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                showToast('Copy failed');
+            });
         }
 
         function renderFrame() {
@@ -386,6 +433,9 @@
             // Save preference
             localStorage.setItem('asciiCameraTheme', themes[currentThemeIndex]);
         });
+
+        saveBtn.addEventListener('click', saveAsImage);
+        copyBtn.addEventListener('click', copyToClipboard);
 
         // Load saved theme
         const savedTheme = localStorage.getItem('asciiCameraTheme');
