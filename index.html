@@ -194,6 +194,40 @@
             opacity: 1;
         }
 
+        .pause-btn-container {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        #pause-btn {
+            background: rgba(0, 0, 0, 0.8);
+            color: inherit;
+            border: 2px solid currentColor;
+            padding: 0.8rem 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #pause-btn:hover {
+            background: rgba(0, 0, 0, 0.95);
+        }
+
+        #pause-btn:active {
+            transform: scale(0.95);
+        }
+
+        #pause-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
         /* Color themes - text color only */
         body.theme-pink { color: #ff69b4; }
         body.theme-blue { color: #6495ed; }
@@ -221,6 +255,9 @@
         <pre id="ascii-output"></pre>
         <div id="loading" class="loading" style="display: none;">Initializing camera...</div>
         <div id="error" class="error" style="display: none;"></div>
+        <div class="pause-btn-container">
+            <button id="pause-btn" disabled>Pause</button>
+        </div>
     </div>
 
     <div class="info">
@@ -235,6 +272,7 @@
         const startBtn = document.getElementById('start-btn');
         const flipBtn = document.getElementById('flip-btn');
         const themeBtn = document.getElementById('theme-btn');
+        const pauseBtn = document.getElementById('pause-btn');
         const loading = document.getElementById('loading');
         const errorDiv = document.getElementById('error');
         const fpsDisplay = document.getElementById('fps');
@@ -249,6 +287,7 @@
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d', { willReadFrequently: true });
         let currentFacingMode = 'user'; // Start with front camera
+        let isPaused = false;
 
         // Theme cycling
         const themes = ['pink', 'blue', 'purple', 'mint', 'peach', 'lavender', 'matrix'];
@@ -289,6 +328,9 @@
                     video.play();
                     loading.style.display = 'none';
                     flipBtn.disabled = false;
+                    pauseBtn.disabled = false;
+                    isPaused = false;
+                    pauseBtn.textContent = 'Pause';
                     startBtn.textContent = 'Stop Camera';
                     startBtn.disabled = false;
 
@@ -325,54 +367,60 @@
             asciiOutput.textContent = '';
             startBtn.textContent = 'Start Camera';
             flipBtn.disabled = true;
+            pauseBtn.disabled = true;
+            isPaused = false;
+            pauseBtn.textContent = 'Pause';
         }
 
         function renderFrame() {
             if (!stream) return;
 
-            // Draw video frame to canvas
-            // If using front camera (user), flip horizontally for natural view
-            if (currentFacingMode === 'user') {
-                ctx.save();
-                ctx.scale(-1, 1);
-                ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-                ctx.restore();
-            } else {
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            }
-
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const pixels = imageData.data;
-
-            let ascii = '';
-
-            for (let y = 0; y < canvas.height; y++) {
-                for (let x = 0; x < canvas.width; x++) {
-                    const idx = (y * canvas.width + x) * 4;
-                    const r = pixels[idx];
-                    const g = pixels[idx + 1];
-                    const b = pixels[idx + 2];
-
-                    // Calculate brightness
-                    const brightness = (r + g + b) / 3;
-                    const charIndex = Math.floor((brightness / 255) * (ASCII_CHARS.length - 1));
-                    const char = ASCII_CHARS[charIndex];
-
-                    ascii += char;
+            // If paused, skip rendering but keep the animation loop running
+            if (!isPaused) {
+                // Draw video frame to canvas
+                // If using front camera (user), flip horizontally for natural view
+                if (currentFacingMode === 'user') {
+                    ctx.save();
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+                    ctx.restore();
+                } else {
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 }
-                ascii += '\n';
-            }
 
-            asciiOutput.textContent = ascii;
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const pixels = imageData.data;
 
-            // Update FPS
-            frameCount++;
-            const now = Date.now();
-            if (now - lastFrameTime >= 1000) {
-                fps = frameCount;
-                fpsDisplay.textContent = `FPS: ${fps}`;
-                frameCount = 0;
-                lastFrameTime = now;
+                let ascii = '';
+
+                for (let y = 0; y < canvas.height; y++) {
+                    for (let x = 0; x < canvas.width; x++) {
+                        const idx = (y * canvas.width + x) * 4;
+                        const r = pixels[idx];
+                        const g = pixels[idx + 1];
+                        const b = pixels[idx + 2];
+
+                        // Calculate brightness
+                        const brightness = (r + g + b) / 3;
+                        const charIndex = Math.floor((brightness / 255) * (ASCII_CHARS.length - 1));
+                        const char = ASCII_CHARS[charIndex];
+
+                        ascii += char;
+                    }
+                    ascii += '\n';
+                }
+
+                asciiOutput.textContent = ascii;
+
+                // Update FPS
+                frameCount++;
+                const now = Date.now();
+                if (now - lastFrameTime >= 1000) {
+                    fps = frameCount;
+                    fpsDisplay.textContent = `FPS: ${fps}`;
+                    frameCount = 0;
+                    lastFrameTime = now;
+                }
             }
 
             animationId = requestAnimationFrame(renderFrame);
@@ -405,6 +453,11 @@
 
             // Save preference
             localStorage.setItem('asciiCameraTheme', themes[currentThemeIndex]);
+        });
+
+        pauseBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
         });
 
         // Load saved theme
